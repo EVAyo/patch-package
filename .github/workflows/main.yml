@@ -1,4 +1,7 @@
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [master]
 name: Test
 jobs:
   test:
@@ -7,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        node: [10, 12, 13]
+        node: [14, 16, 18]
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1

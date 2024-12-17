@@ -10,7 +10,8 @@ import { detectPackageManager } from "./detectPackageManager"
 import { join } from "./path"
 import { normalize, sep } from "path"
 import slash = require("slash")
-import isCi from "is-ci"
+import { isCI } from "ci-info"
+import { rebase } from "./rebase"
 
 const appPath = getAppRootPath()
 const argv = minimist(process.argv.slice(2), {
@@ -23,8 +24,10 @@ const argv = minimist(process.argv.slice(2), {
     "error-on-fail",
     "error-on-warn",
     "create-issue",
+    "partial",
+    "",
   ],
-  string: ["patch-dir"],
+  string: ["patch-dir", "append", "rebase"],
 })
 const packageNames = argv._
 
@@ -43,7 +46,30 @@ if (argv.version || argv.v) {
   if (patchDir.startsWith("/")) {
     throw new Error("--patch-dir must be a relative path")
   }
-  if (packageNames.length) {
+  if ("rebase" in argv) {
+    if (!argv.rebase) {
+      console.log(
+        chalk.red(
+          "You must specify a patch file name or number when rebasing patches",
+        ),
+      )
+      process.exit(1)
+    }
+    if (packageNames.length !== 1) {
+      console.log(
+        chalk.red(
+          "You must specify exactly one package name when rebasing patches",
+        ),
+      )
+      process.exit(1)
+    }
+    rebase({
+      appPath,
+      packagePathSpecifier: packageNames[0],
+      patchDir,
+      targetPatch: argv.rebase,
+    })
+  } else if (packageNames.length) {
     const includePaths = makeRegExp(
       argv.include,
       "include",
@@ -70,15 +96,22 @@ if (argv.version || argv.v) {
         excludePaths,
         patchDir,
         createIssue,
+        mode:
+          "append" in argv
+            ? { type: "append", name: argv.append || undefined }
+            : { type: "overwrite_last" },
       })
     })
   } else {
     console.log("Applying patches...")
     const reverse = !!argv["reverse"]
-    // don't want to exit(1) on postinsall locally.
+    // don't want to exit(1) on postinstall locally.
     // see https://github.com/ds300/patch-package/issues/86
     const shouldExitWithError =
-      !!argv["error-on-fail"] || isCi || process.env.NODE_ENV === "test"
+      !!argv["error-on-fail"] ||
+      (process.env.NODE_ENV === "production" && isCI) ||
+      (isCI && !process.env.PATCH_PACKAGE_INTEGRATION_TEST) ||
+      process.env.NODE_ENV === "test"
 
     const shouldExitWithWarning = !!argv["error-on-warn"]
 
@@ -88,6 +121,7 @@ if (argv.version || argv.v) {
       patchDir,
       shouldExitWithError,
       shouldExitWithWarning,
+      bestEffort: argv.partial,
     })
   }
 }

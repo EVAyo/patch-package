@@ -1,5 +1,32 @@
 # Changelog
 
+## 8.0.0
+
+- Add support for multiple patch files for a single package. #474
+
+### Breaking Changes
+
+- Removed support for some very old legacy filename format stuff (pre-2019).
+
+## 7.0.2
+
+- Bump semver again (contribution from @rsanchez in #477)
+
+## 7.0.1
+
+- Bump semver (contribution from @stianjensen in #466)
+
+### Breaking changes
+
+- Bump `yaml` to fix security issue. Required bumping minimum node version from
+  8 to 14. (contribution from @mayank99 in #463)
+
+### Other changes
+
+- Bump `cross-spawn` (contribution from @stianjensen in #457)
+- Replace `is-ci` with `ci-info` (contribution from @paescuj in #446)
+- Make version number parsing more robust (contribution from @MHekert in #361)
+
 ## 6.5.1
 
 Special thanks to @orta again for putting this release together.
